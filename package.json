@@ -11,21 +11,26 @@
   ],
   "scripts": {
     "dev": "concurrently -k -n server,client -c blue,green \"npm:dev:server\" \"npm:dev:client\"",
-    "dev:server": "tsx watch server/index.ts",
+    "dev:server": "tsx --env-file-if-exists=.env watch server/index.ts",
     "dev:client": "npm run dev -w client",
     "build": "npm run build -w client",
-    "start": "tsx server/index.ts",
+    "start": "tsx --env-file-if-exists=.env server/index.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint \"server/**/*.ts\" \"tools/**/*.ts\" \"guardrails/**/*.ts\" \"tax/**/*.ts\"",
     "test": "vitest run",
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.106.0",
     "@fastify/static": "^8.0.4",
+    "better-sqlite3": "^12.11.1",
     "fastify": "^5.2.1",
-    "tsx": "^4.19.2"
+    "pdf-lib": "^1.17.1",
+    "tsx": "^4.19.2",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.10.5",
     "concurrently": "^9.1.2",
     "typescript": "^5.7.3",
