@@ -43,7 +43,14 @@ export async function handleMessage(state: SessionState, userText: string): Prom
   logEvent(state.id, 'user_message', { text: userText });
   appendMessage(state.id, { role: 'user', content: userText });
 
-  let assistantText = '';
+  // Everything the user should see this turn, in order: the model's prose plus the text of any
+  // question it asked (an ask_question tool call carries the user-facing question text).
+  const parts: string[] = [];
+  const pushUnique = (s: string) => {
+    const t = s.trim();
+    if (t && parts[parts.length - 1] !== t) parts.push(t);
+  };
+
   for (let turn = 0; turn < MAX_TOOL_TURNS; turn++) {
     const messages = getHistory(state.id).map((m) => ({
       role: m.role,
@@ -60,18 +67,18 @@ export async function handleMessage(state: SessionState, userText: string): Prom
 
     appendMessage(state.id, { role: 'assistant', content: resp.content });
 
-    const text = resp.content
-      .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-      .map((b) => b.text)
-      .join('\n')
-      .trim();
-    if (text) assistantText = text;
+    for (const b of resp.content) {
+      if (b.type === 'text') pushUnique(b.text);
+    }
 
     if (resp.stop_reason === 'tool_use') {
       const toolUses = resp.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use');
       const toolResults: Anthropic.ToolResultBlockParam[] = [];
       for (const tu of toolUses) {
         const r = await dispatchTool(state, tu.name, tu.input);
+        if (tu.name === 'ask_question' && r.ok) {
+          pushUnique(String((tu.input as { text?: string }).text ?? ''));
+        }
         toolResults.push({
           type: 'tool_result',
           tool_use_id: tu.id,
@@ -86,6 +93,7 @@ export async function handleMessage(state: SessionState, userText: string): Prom
     break;
   }
 
+  const assistantText = parts.join('\n\n');
   logEvent(state.id, 'assistant_message', { text: assistantText });
   persistSession(state);
   return { assistant: assistantText, downloadReady: state.downloadReady };
