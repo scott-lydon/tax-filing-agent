@@ -1,0 +1,65 @@
+{
+  "taxYear": 2025,
+  "source": "tax/SOURCES.md (verified 2026-06-24, OBBBA-adjusted)",
+  "standardDeduction": {
+    "single": 15750,
+    "mfj": 31500,
+    "mfs": 15750,
+    "hoh": 23625,
+    "qss": 31500
+  },
+  "brackets": {
+    "single": [
+      { "rate": 0.10, "upTo": 11925 },
+      { "rate": 0.12, "upTo": 48475 },
+      { "rate": 0.22, "upTo": 103350 },
+      { "rate": 0.24, "upTo": 197300 },
+      { "rate": 0.32, "upTo": 250525 },
+      { "rate": 0.35, "upTo": 626350 },
+      { "rate": 0.37, "upTo": null }
+    ],
+    "mfj": [
+      { "rate": 0.10, "upTo": 23850 },
+      { "rate": 0.12, "upTo": 96950 },
+      { "rate": 0.22, "upTo": 206700 },
+      { "rate": 0.24, "upTo": 394600 },
+      { "rate": 0.32, "upTo": 501050 },
+      { "rate": 0.35, "upTo": 751600 },
+      { "rate": 0.37, "upTo": null }
+    ],
+    "qss": [
+      { "rate": 0.10, "upTo": 23850 },
+      { "rate": 0.12, "upTo": 96950 },
+      { "rate": 0.22, "upTo": 206700 },
+      { "rate": 0.24, "upTo": 394600 },
+      { "rate": 0.32, "upTo": 501050 },
+      { "rate": 0.35, "upTo": 751600 },
+      { "rate": 0.37, "upTo": null }
+    ],
+    "hoh": [
+      { "rate": 0.10, "upTo": 17000 },
+      { "rate": 0.12, "upTo": 64850 },
+      { "rate": 0.22, "upTo": 103350 },
+      { "rate": 0.24, "upTo": 197300 },
+      { "rate": 0.32, "upTo": 250500 },
+      { "rate": 0.35, "upTo": 626350 },
+      { "rate": 0.37, "upTo": null }
+    ],
+    "mfs": [
+      { "rate": 0.10, "upTo": 11925 },
+      { "rate": 0.12, "upTo": 48475 },
+      { "rate": 0.22, "upTo": 103350 },
+      { "rate": 0.24, "upTo": 197300 },
+      { "rate": 0.32, "upTo": 250525 },
+      { "rate": 0.35, "upTo": 375800 },
+      { "rate": 0.37, "upTo": null }
+    ]
+  },
+  "childTaxCredit": {
+    "perChild": 2200,
+    "refundableCap": 1700,
+    "earnedIncomeFloorForRefundable": 2500,
+    "phaseoutStart": { "single": 200000, "mfj": 400000, "mfs": 200000, "hoh": 200000, "qss": 400000 },
+    "phaseoutRatePer1000": 50
+  }
+}

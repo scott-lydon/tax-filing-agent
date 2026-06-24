@@ -1,0 +1,14 @@
+{
+  "employeeName": "Jordan A. Rivera",
+  "employeeSSN": "123-45-6789",
+  "employerName": "Brightleaf Coffee Roasters LLC",
+  "employerEIN": "12-3456789",
+  "box1Wages": 40000,
+  "box2FedWithholding": 4000,
+  "box3SsWages": 40000,
+  "box4SsTax": 2480,
+  "box5MedicareWages": 40000,
+  "box6MedicareTax": 580,
+  "box16StateWages": 40000,
+  "box17StateTax": 1200
+}

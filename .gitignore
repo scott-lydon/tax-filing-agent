@@ -11,3 +11,6 @@ data/returns/
 test-results/
 playwright-report/
 .vite/
+.env.*
+!.env.example
+assets/_*.pdf
