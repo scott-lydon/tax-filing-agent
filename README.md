@@ -39,6 +39,13 @@ Node + TypeScript, Fastify server, React + Vite UI, Anthropic Claude Sonnet 4.6 
 - `QA_ADVERSARY.md` — how the QA agent attacks this project.
 - `DECISIONS.md` — half-page decision summary (Slice 10).
 
+## Debug / observability
+
+- `GET /api/health` returns `{ ok, version: <git sha> }`.
+- `GET /api/session/:id/trace` returns the append-only event trail.
+- `GET /api/admin/session/:id` returns full session state plus the trace, for manual inspection.
+- In the UI, the "Show what the agent did" drawer streams the same trace live.
+
 ## Scope
 
 Prototype. Fake data only. No e-filing. Not tax advice.
