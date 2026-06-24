@@ -1,0 +1,13 @@
+node_modules/
+client/dist/
+dist/
+data/sessions.db
+data/sessions/
+data/returns/
+*.log
+.env
+.env.local
+.DS_Store
+test-results/
+playwright-report/
+.vite/
