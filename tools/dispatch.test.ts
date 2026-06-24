@@ -65,4 +65,28 @@ describe('full tool chain produces a downloadable filled PDF (AT-H2)', () => {
     const pdfPath = join(process.env.TFA_DATA_DIR ?? '', 'returns', `${state.id}.pdf`);
     expect(existsSync(pdfPath)).toBe(true);
   });
+
+  it('update_w2 mid-conversation reaches the finalized PDF (Bug 5)', async () => {
+    const state = createSession();
+
+    expect((await dispatchTool(state, 'record_w2', { w2: sampleW2 })).ok).toBe(true);
+    expect((await dispatchTool(state, 'record_answer', { filingStatus: 'single' })).ok).toBe(true);
+    expect((await dispatchTool(state, 'compute_return', {})).ok).toBe(true);
+
+    // The user corrects two fields after the first compute: SSN and wages.
+    const updated = await dispatchTool(state, 'update_w2', {
+      w2: { employeeSSN: '987-65-4321', box1Wages: 50000 },
+    });
+    expect(updated.ok).toBe(true);
+
+    const finalized = await dispatchTool(state, 'finalize_and_render', {});
+    expect(finalized.ok).toBe(true);
+    if (finalized.ok) {
+      const r = finalized.result as { fields_filled: Record<string, string> };
+      // SSN identity comes straight from the authoritative W-2; money lines are recomputed.
+      expect(r.fields_filled.ssn).toBe('987654321');
+      expect(r.fields_filled.line1a_wages).toBe('50000');
+    }
+    expect(state.w2?.employeeSSN).toBe('987-65-4321');
+  });
 });

@@ -13,6 +13,9 @@ export type QuestionId = z.infer<typeof QuestionIdSchema>;
 
 export const RecordW2Schema = z.object({ w2: W2Schema });
 
+/** A correction to the already-recorded W-2. Any subset of fields may be supplied. */
+export const UpdateW2Schema = z.object({ w2: W2Schema.partial() });
+
 export const AskQuestionSchema = z.object({
   questionId: QuestionIdSchema,
   text: z.string().min(1).describe('The friendly question to show the user.'),
@@ -35,6 +38,7 @@ export const FinalizeAndRenderSchema = z.object({});
 
 export const TOOL_INPUT_SCHEMAS = {
   record_w2: RecordW2Schema,
+  update_w2: UpdateW2Schema,
   ask_question: AskQuestionSchema,
   record_answer: RecordAnswerSchema,
   compute_return: ComputeReturnSchema,
@@ -46,6 +50,8 @@ export type ToolName = keyof typeof TOOL_INPUT_SCHEMAS;
 const DESCRIPTIONS: Record<ToolName, string> = {
   record_w2:
     "Record the user's W-2. Call this as soon as you have their W-2 numbers (box 1 wages and box 2 federal withholding at minimum).",
+  update_w2:
+    "Update one or more fields of the already-recorded W-2 when the user corrects a detail (for example a changed SSN, name, wages, or withholding). Pass only the fields that change; the rest stay as recorded.",
   ask_question:
     'Ask the user one of the five allowed questions. You may ask at most five questions total; the system enforces this. Pass the questionId and the warm, plain-language text you want to show.',
   record_answer:

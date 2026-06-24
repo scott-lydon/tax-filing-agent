@@ -47,6 +47,15 @@ export async function dispatchTool(
       return finish(state, name, { ok: true, result: { recorded: true, wages: state.w2!.box1Wages } });
     }
 
+    case 'update_w2': {
+      if (!state.w2) {
+        return finish(state, name, { ok: false, error: 'No W-2 to update yet.', remediation: 'Call record_w2 to record the W-2 first, then update_w2 for corrections.' });
+      }
+      const patch = (args as { w2: Partial<NonNullable<SessionState['w2']>> }).w2 ?? {};
+      state.w2 = { ...state.w2, ...patch };
+      return finish(state, name, { ok: true, result: { updated: Object.keys(patch), w2: state.w2 } });
+    }
+
     case 'ask_question': {
       const { questionId, text } = args as { questionId: string; text: string };
       const decision = evaluateQuestion(state, questionId as never);
@@ -100,11 +109,21 @@ export async function dispatchTool(
     }
 
     case 'finalize_and_render': {
-      if (!state.return1040 || !state.w2) {
-        return finish(state, name, { ok: false, error: 'Nothing computed yet.', remediation: 'Call compute_return successfully before finalize_and_render.' });
+      if (!state.w2) {
+        return finish(state, name, { ok: false, error: 'No W-2 recorded yet.', remediation: 'Call record_w2 with the W-2 numbers first.' });
       }
-      const answers = AnswersSchema.parse(state.answers);
-      const { bytes, fieldsFilled, missing } = await fillReturn(state.return1040, state.w2, answers);
+      const answers = AnswersSchema.safeParse(state.answers);
+      if (!answers.success || !state.answers.filingStatus) {
+        return finish(state, name, {
+          ok: false,
+          error: 'Filing status is required before finalizing.',
+          remediation: 'Ask the filing status question, then record_answer with filingStatus, then finalize_and_render.',
+        });
+      }
+      // Recompute from the session's authoritative W-2 and answers so the PDF reflects any
+      // mid-conversation corrections (a changed SSN, wages, filing status, and so on), never a stale snapshot.
+      state.return1040 = computeReturn(state.w2, answers.data);
+      const { bytes, fieldsFilled, missing } = await fillReturn(state.return1040, state.w2, answers.data);
       writeFileSync(join(RETURNS_DIR, `${state.id}.pdf`), bytes);
       state.downloadReady = true;
       state.status = 'complete';
