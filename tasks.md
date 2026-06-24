@@ -10,8 +10,8 @@ Slices, smallest shippable units. Each names its acceptance test and the archite
 - [x] Five CATA docs at repo root, populated: `coding-practices.md`, `ARCHITECTURE.md`, `acceptance-tests.md`, `tasks.md`, `QA_ADVERSARY.md`.
 - [x] Placeholder grep prints zero matches.
 - [x] `render.yaml` with one Web Service, Node runtime, build `npm ci && npm run build`, start `npm start`.
-- [ ] First commit pushes clean to both remotes.
-- Acceptance: AT-D1. `git ls-remote origin main` and `git ls-remote gitlab main` print the same hash; placeholder grep prints nothing.
+- [x] First commit pushes clean to both remotes (f40fbd2 on github + gitlab).
+- Acceptance: AT-D1. PASS. `git ls-remote origin main` and `git ls-remote gitlab main` both print f40fbd2; placeholder grep prints nothing.
 
 ## Next slices
 
