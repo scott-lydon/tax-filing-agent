@@ -14,5 +14,5 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": ["server", "tools", "guardrails", "tax", "tests"],
-  "exclude": ["node_modules", "client", "dist"]
+  "exclude": ["node_modules", "client", "dist", "tests/e2e"]
 }

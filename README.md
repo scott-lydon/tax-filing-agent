@@ -28,7 +28,7 @@ E2E_BASE_URL=https://tax-filing-agent.onrender.com npx playwright test
 
 ## Stack
 
-Node + TypeScript, Fastify server, React + Vite UI, Anthropic Claude (Sonnet 4.6 loop, Haiku 4.5 classify), pdf-lib against the official IRS 2025 Form 1040, better-sqlite3 for sessions, deployed on Render.
+Node + TypeScript, Fastify server, React + Vite UI, Anthropic Claude Sonnet 4.6 for the conversation and tool loop, pdf-lib against the official IRS 2025 Form 1040, better-sqlite3 for sessions, deployed on Render. The five-question budget is enforced by a deterministic in-code counter (no second model needed).
 
 ## Docs
 

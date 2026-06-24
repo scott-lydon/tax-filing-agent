@@ -51,6 +51,12 @@ export async function dispatchTool(
       const { questionId, text } = args as { questionId: string; text: string };
       const decision = evaluateQuestion(state, questionId as never);
       if (!decision.allowed) {
+        logEvent(state.id, 'guardrail_block', {
+          layer: 'budget',
+          questionId,
+          questionsAsked: state.questionsAsked,
+          reason: 'sixth distinct question refused',
+        });
         return finish(state, name, {
           ok: false,
           error: 'Question budget exhausted.',

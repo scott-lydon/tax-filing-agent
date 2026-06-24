@@ -29,7 +29,7 @@ flowchart TD
     Asset["assets/f1040-2025.pdf"]
   end
 
-  Claude["Anthropic Messages API\nSonnet 4.6 loop + Haiku 4.5 classify"]
+  Claude["Anthropic Messages API\nClaude Sonnet 4.6"]
 
   UI --> API
   Sample --> API
@@ -102,7 +102,7 @@ sequenceDiagram
 | Decision | What we chose | Alternative considered | Why |
 |----------|---------------|------------------------|-----|
 | Language and framework | Node.js + TypeScript, Fastify server, React + Vite UI | Python + FastAPI, or HTML + htmx; Swift (project default) | Render's free Node service has the lowest cold-start cost, the agent stack is mature in TS, and TS gives a typed contract across the wire. Swift loses to the web target. |
-| LLM provider and model | Anthropic Claude (Sonnet 4.6 loop, Haiku 4.5 classify) | OpenAI gpt-4o-mini, local Llama via Ollama | First-class tool calling, structured JSON via tool schemas, key plumbing already in this environment. |
+| LLM provider and model | Anthropic Claude Sonnet 4.6 for the conversation and tool loop | OpenAI gpt-4o-mini, local Llama via Ollama; a second cheap model (Haiku) for classification was considered and dropped | First-class tool calling, structured JSON via tool schemas, key plumbing already in this environment. The question budget is enforced by a deterministic counter, so no classifier model is needed. |
 | Agent harness | Anthropic Messages API `tools` param, server-driven dispatch, Zod-validated args | LangGraph, ai-sdk agent loop | Smallest moving piece that still shows each pillar in code the judge can point at. No framework to defend. |
 | 1040 PDF source | Official IRS 2025 Form 1040 fillable PDF in `assets/f1040-2025.pdf` | Recreate the form in HTML to PDF | The judge accepts a real IRS form. Use the real AcroForm. |
 | 1040 fill mechanism | `pdf-lib` against AcroForm field names, flattened on download | `pdftk` shell, `pdf-form-fill` | Pure JS, no system deps on Render free tier, supports flattening. |
@@ -117,7 +117,7 @@ sequenceDiagram
 ## Trade-offs
 
 - **SQLite over a managed database.** Accept: a Render free restart keeps the on-disk file only if the disk persists; we treat the JSONL trace and the returns directory as the durable record and reconstruct session state from messages. When it bites: high concurrency or multi-instance scale. Revisit trigger: more than one web instance.
-- **Question budget enforced by a Haiku classifier counting distinct questions.** Accept: a small latency and cost per turn. When it bites: a borderline turn that bundles two questions. Revisit trigger: false counts observed in the trace.
+- **Question budget enforced by a deterministic distinct-question counter in code.** Accept: the agent must ask one topic per `ask_question` call for the count to be exact. When it bites: a turn that crams two topics into one question text would count as one. Revisit trigger: bundled questions observed in the trace. (A Haiku classifier was considered for this and dropped as unnecessary moving parts.)
 - **Paste-in W-2 as the default.** Accept: no OCR robustness. When it bites: a judge who insists on image upload. Mitigation: PDF upload is a scoped stretch goal.
 
 ## Slicing sequence
