@@ -4,8 +4,9 @@ An agentic chat assistant that helps a W-2 earner (around $40,000/year) file a 2
 
 Four enforced pillars: a stateful chat loop, real tools the agent invokes, guardrails enforced in code, and an observation trail you can read.
 
-- Live URL: pending (Slice 9).
-- Demo recording: pending (Slice 9).
+- Live URL: https://tax-filing-agent.onrender.com
+- Demo recording (68s, recorded against the live URL): [`docs/demo-live.webm`](docs/demo-live.webm)
+- Architecture website: [`website/index.html`](website/index.html)
 
 ## One-command local run
 
@@ -13,10 +14,16 @@ Four enforced pillars: a stateful chat loop, real tools the agent invokes, guard
 npm ci && npm test && npm run build && npm start
 ```
 
-Then open http://localhost:8787. The chat loop needs an Anthropic API key:
+Then open http://localhost:8787. The chat loop needs an Anthropic API key; put it in `.env` (auto-loaded) or export it:
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...
+echo "ANTHROPIC_API_KEY=sk-ant-..." > .env
+```
+
+Run the end-to-end test against the live site:
+
+```bash
+E2E_BASE_URL=https://tax-filing-agent.onrender.com npx playwright test
 ```
 
 ## Stack

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>tax-filing-agent · architecture</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <style>
+      :root {
+        --bg: #0a0e1a;
+        --panel: #1a2236;
+        --accent: #6366f1;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+      }
+      body { background: var(--bg); color: var(--text); }
+      .panel { background: var(--panel); border: 1px solid #2a3550; }
+      .accent { color: var(--accent); }
+      a { color: #818cf8; }
+      .pill { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.4); }
+    </style>
+  </head>
+  <body class="font-sans">
+    <nav class="sticky top-0 z-10 panel px-6 py-3 flex gap-6 text-sm">
+      <span class="font-bold accent">tax-filing-agent</span>
+      <a href="#pillars">Pillars</a>
+      <a href="#topology">Topology</a>
+      <a href="#flow">Data flow</a>
+      <a href="#decisions">Decisions</a>
+      <a href="#tradeoffs">Trade-offs</a>
+      <a href="#cost">Cost</a>
+      <a href="#stack">Stack</a>
+    </nav>
+
+    <header class="px-6 py-12 max-w-5xl mx-auto text-center">
+      <h1 class="text-4xl font-bold">An agentic 2025 Form 1040 assistant</h1>
+      <p class="mt-3 text-lg" style="color: var(--muted)">
+        A warm chat that ingests a W-2, asks at most five questions, and hands back a filled, downloadable IRS Form 1040. Four pillars, all enforced in code you can read.
+      </p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+        <div class="panel rounded-lg p-4"><div class="text-2xl font-bold accent">5</div><div class="text-sm" style="color:var(--muted)">question budget, enforced in code</div></div>
+        <div class="panel rounded-lg p-4"><div class="text-2xl font-bold accent">3</div><div class="text-sm" style="color:var(--muted)">guardrail layers</div></div>
+        <div class="panel rounded-lg p-4"><div class="text-2xl font-bold accent">199</div><div class="text-sm" style="color:var(--muted)">IRS AcroForm fields mapped + verified</div></div>
+        <div class="panel rounded-lg p-4"><div class="text-2xl font-bold accent">32</div><div class="text-sm" style="color:var(--muted)">unit/integration tests, plus 1 live e2e</div></div>
+      </div>
+      <p class="mt-6"><a href="https://tax-filing-agent.onrender.com">Live app</a> · <a href="https://github.com/scott-lydon/tax-filing-agent">Repo</a></p>
+    </header>
+
+    <section id="pillars" class="px-6 py-8 max-w-5xl mx-auto">
+      <h2 class="text-2xl font-bold mb-4">The four pillars</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="panel rounded-lg p-4"><h3 class="font-semibold accent">1. Chat loop with state</h3><p class="text-sm mt-1" style="color:var(--muted)">Sessions and messages persist to SQLite; an in-flight session rehydrates after a restart so the agent can still quote turn one.</p></div>
+        <div class="panel rounded-lg p-4"><h3 class="font-semibold accent">2. Real tools</h3><p class="text-sm mt-1" style="color:var(--muted)">record_w2, record_answer, compute_return, finalize_and_render, ask_question. The last tool fills the real IRS PDF and writes it to disk.</p></div>
+        <div class="panel rounded-lg p-4"><h3 class="font-semibold accent">3. Guardrails in code</h3><p class="text-sm mt-1" style="color:var(--muted)">Zod validation, a refusal screen, and a distinct-question counter that refuses a sixth question. Not prompt-only.</p></div>
+        <div class="panel rounded-lg p-4"><h3 class="font-semibold accent">4. Observation</h3><p class="text-sm mt-1" style="color:var(--muted)">Every step is appended to a JSONL trail, served at a trace endpoint, and streamed into a "Show what the agent did" drawer.</p></div>
+      </div>
+    </section>
+
+    <section id="topology" class="px-6 py-8 max-w-5xl mx-auto">
+      <h2 class="text-2xl font-bold mb-4">Topology</h2>
+      <div class="panel rounded-lg p-4">
+        <pre class="mermaid">
+flowchart TD
+  UI["React chat UI + trace drawer"] --> API["Fastify API"]
+  API --> Harness["Agent harness (chat + tool loop)"]
+  Harness --> Guards["Guardrails: Zod, refusals, budget"]
+  Guards --> Claude["Anthropic Claude Sonnet 4.6"]
+  Claude --> Dispatch["Tool dispatcher"]
+  Dispatch --> Tax["tax/compute2025.ts (pure)"]
+  Dispatch --> Pdf["pdf-lib fills IRS 1040"]
+  Harness --> DB["SQLite sessions"]
+  Dispatch --> Log["JSONL trace + stdout"]
+        </pre>
+      </div>
+    </section>
+
+    <section id="flow" class="px-6 py-8 max-w-5xl mx-auto">
+      <h2 class="text-2xl font-bold mb-4">End-to-end data flow</h2>
+      <div class="panel rounded-lg p-4">
+        <pre class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant S as Server
+  participant G as Guardrails
+  participant C as Claude
+  participant T as Tools
+  U->>S: send sample W-2
+  S->>G: screen message
+  S->>C: history + tool schemas
+  C->>T: record_w2
+  C->>U: ask_question (filing status)
+  U->>S: answers (up to 5)
+  C->>T: compute_return + finalize_and_render
+  S->>U: download link + live trace
+        </pre>
+      </div>
+    </section>
+
+    <section id="decisions" class="px-6 py-8 max-w-5xl mx-auto">
+      <h2 class="text-2xl font-bold mb-4">Decisions</h2>
+      <div class="overflow-x-auto panel rounded-lg p-4">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left accent"><th class="p-2">Decision</th><th class="p-2">Chose</th><th class="p-2">Alternative</th><th class="p-2">Why</th></tr></thead>
+          <tbody style="color:var(--muted)">
+            <tr class="border-t border-slate-700"><td class="p-2">Stack</td><td class="p-2">Node + TS, Fastify, React/Vite</td><td class="p-2">Python/FastAPI, Swift</td><td class="p-2">Low cold start on Render, mature TS agent tooling, typed wire contract</td></tr>
+            <tr class="border-t border-slate-700"><td class="p-2">Model</td><td class="p-2">Claude Sonnet 4.6</td><td class="p-2">gpt-4o-mini, local Llama</td><td class="p-2">First-class tool calling, structured JSON</td></tr>
+            <tr class="border-t border-slate-700"><td class="p-2">PDF fill</td><td class="p-2">pdf-lib + verified field map</td><td class="p-2">pdftk, HTML-to-PDF</td><td class="p-2">Pure JS, real IRS AcroForm, no system deps</td></tr>
+            <tr class="border-t border-slate-700"><td class="p-2">Tax math</td><td class="p-2">Pure TS + sourced JSON table</td><td class="p-2">External tax API</td><td class="p-2">Auditable, unit-tested, OBBBA-adjusted 2025 numbers</td></tr>
+            <tr class="border-t border-slate-700"><td class="p-2">Guardrails</td><td class="p-2">Three code layers</td><td class="p-2">Prompt-only</td><td class="p-2">Spec calls prompt-only the weaker answer</td></tr>
+            <tr class="border-t border-slate-700"><td class="p-2">Budget</td><td class="p-2">Deterministic counter</td><td class="p-2">Haiku classifier</td><td class="p-2">No false counts, fewer moving parts</td></tr>
+            <tr class="border-t border-slate-700"><td class="p-2">State</td><td class="p-2">SQLite (better-sqlite3)</td><td class="p-2">Redis, Postgres</td><td class="p-2">Free tier, single binary, survives restart</td></tr>
+            <tr class="border-t border-slate-700"><td class="p-2">Hosting</td><td class="p-2">Render free Web Service</td><td class="p-2">Vercel, Fly, Railway</td><td class="p-2">Spec names Render first</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tradeoffs" class="px-6 py-8 max-w-5xl mx-auto">
+      <h2 class="text-2xl font-bold mb-4">Trade-offs</h2>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="panel rounded-lg p-4"><h3 class="font-semibold">SQLite, not a managed DB</h3><p class="text-sm mt-1" style="color:var(--muted)"><b>Accept:</b> single instance only. <b>Bites:</b> multi-instance scale. <b>Revisit:</b> more than one web instance.</p></div>
+        <div class="panel rounded-lg p-4"><h3 class="font-semibold">Child Tax Credit on line 19 only</h3><p class="text-sm mt-1" style="color:var(--muted)"><b>Accept:</b> refundable ACTC (line 28) not modeled. <b>Bites:</b> low-tax filer with kids. <b>Revisit:</b> add Schedule 8812. Documented in code.</p></div>
+        <div class="panel rounded-lg p-4"><h3 class="font-semibold">Paste-in W-2 default</h3><p class="text-sm mt-1" style="color:var(--muted)"><b>Accept:</b> no OCR. <b>Bites:</b> reviewer who insists on image upload. <b>Revisit:</b> stretch goal.</p></div>
+      </div>
+    </section>
+
+    <section id="cost" class="px-6 py-8 max-w-5xl mx-auto">
+      <h2 class="text-2xl font-bold mb-4">Cost shape</h2>
+      <div class="panel rounded-lg p-4"><canvas id="costChart" height="120"></canvas></div>
+      <p class="text-sm mt-2" style="color:var(--muted)">Per completed return: a handful of Sonnet 4.6 turns (W-2 ack, five questions, finalize) dominate; hosting is the free tier; the PDF fill and tax math are local CPU.</p>
+    </section>
+
+    <section id="stack" class="px-6 py-8 max-w-5xl mx-auto">
+      <h2 class="text-2xl font-bold mb-4">Tech stack</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+        <div class="panel rounded-lg p-3 flex items-center gap-2"><img src="https://cdn.simpleicons.org/typescript/3178c6" width="22"/> TypeScript</div>
+        <div class="panel rounded-lg p-3 flex items-center gap-2"><img src="https://cdn.simpleicons.org/nodedotjs/339933" width="22"/> Node.js</div>
+        <div class="panel rounded-lg p-3 flex items-center gap-2"><img src="https://cdn.simpleicons.org/fastify/000000" width="22" style="filter:invert(1)"/> Fastify</div>
+        <div class="panel rounded-lg p-3 flex items-center gap-2"><img src="https://cdn.simpleicons.org/react/61dafb" width="22"/> React</div>
+        <div class="panel rounded-lg p-3 flex items-center gap-2"><img src="https://cdn.simpleicons.org/vite/646cff" width="22"/> Vite</div>
+        <div class="panel rounded-lg p-3 flex items-center gap-2"><img src="https://cdn.simpleicons.org/tailwindcss/06b6d4" width="22"/> Tailwind</div>
+        <div class="panel rounded-lg p-3 flex items-center gap-2"><img src="https://cdn.simpleicons.org/anthropic/d4a373" width="22"/> Claude Sonnet 4.6</div>
+        <div class="panel rounded-lg p-3 flex items-center gap-2"><img src="https://cdn.simpleicons.org/render/46e3b7" width="22"/> Render</div>
+      </div>
+    </section>
+
+    <footer class="px-6 py-10 text-center text-sm" style="color:var(--muted)">
+      <a href="https://github.com/scott-lydon/tax-filing-agent">GitHub</a> · prototype, fake data only, not tax advice
+    </footer>
+
+    <script>
+      mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose', themeVariables: { primaryColor: '#1a2236', primaryTextColor: '#e2e8f0', lineColor: '#6366f1' } });
+      new Chart(document.getElementById('costChart'), {
+        type: 'bar',
+        data: {
+          labels: ['LLM turns', 'Hosting', 'PDF fill', 'Tax math'],
+          datasets: [{ label: 'relative cost per return', data: [85, 10, 3, 2], backgroundColor: '#6366f1' }],
+        },
+        options: { plugins: {}, scales: { y: { ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } },
+      });
+    </script>
+  </body>
+</html>

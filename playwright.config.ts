@@ -14,7 +14,13 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: [['list']],
-  use: { baseURL, headless: true, acceptDownloads: true },
+  use: {
+    baseURL,
+    headless: true,
+    acceptDownloads: true,
+    video: process.env.RECORD ? 'on' : 'off',
+    viewport: { width: 900, height: 800 },
+  },
   webServer: liveUrl
     ? undefined
     : {
