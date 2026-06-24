@@ -49,7 +49,7 @@ Slices, smallest shippable units. Status as of the live deploy of commit f085282
 - [x] `DECISIONS.md` (all ten decisions).
 - [x] `README.md` with live URL + one-command run.
 - [x] Final dual push, both remotes match.
-- [ ] Save the submission URL to a notes doc on submit.
+- [x] Submission links saved to `docs/SUBMISSION.md` (the portal submission itself is the operator's step).
 
 ## Backlog (stretch)
 - [ ] Second filing status with a dependent (CTC) — partially supported; ACTC not modeled.
